@@ -1,34 +1,40 @@
+from app.config.config import postgresqlConfig
+from app.config.db import db
+from app.models.user import TokenBlocklist, Users
+from app.resources.surveys import CreateSurvey, SendAnswers, CompleteSurvey, GetSurveys
+from app.resources.user import Register, GetUsers, Login, Profile, Logout
 from flask import Flask, render_template
 from datetime import timedelta
 from flask_restful import Api
-from app.models import db, tokenblocklist, users
 from flask_jwt_extended import JWTManager
-from app.api.resources import Register, GetUsers, Login, Logout, CreateSurvey, SendAnswers, GetSurveys,\
-    CompleteSurvey, Profile
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:1@localhost:5432/postgres"
+app.config["SQLALCHEMY_DATABASE_URI"] = postgresqlConfig
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=2)
 app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
-db.init_app(app)
+
 jwt = JWTManager(app)
+api = Api(app)
+
+with app.app_context():
+    db.init_app(app)
+    db.create_all()
+
 
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
     jti = jwt_payload["jti"]
-    token = db.session.query(tokenblocklist.id).filter_by(jti=jti).scalar()
+    token = db.session.query(TokenBlocklist.id).filter_by(jti=jti).scalar()
     return token is not None
+
 
 @jwt.user_lookup_loader
 def user_lookup_callback(jwt_header, jwt_data):
     sub = jwt_data['sub']
     id = sub['id'] if type(sub) is dict else sub
-    return users.get_by_id(id)
+    return Users.get_by_id(id)
 
-with app.app_context():
-    db.create_all()
 
-api = Api(app)
 api.add_resource(Register, "/api/register/", "/api/b/register/")
 api.add_resource(GetUsers, "/api/users/", "/api/users/<int:user_id>/")
 api.add_resource(Login, "/api/login/", "/api/b/login/")
@@ -38,11 +44,3 @@ api.add_resource(CreateSurvey, "/api/createsurvey/")
 api.add_resource(SendAnswers, "/api/completesurvey/<int:survey_id>/sendanswers/")
 api.add_resource(CompleteSurvey, "/api/completesurvey/<int:survey_id>/")
 api.add_resource(GetSurveys, "/api/surveys/", "/api/surveys/<int:survey_id>/")
-
-
-@app.route("/")
-def index():
-    return render_template('index.html')
-
-if __name__ == "__main__":
-    app.run(debug=True, port=3000, host='127.0.0.1')
