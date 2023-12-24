@@ -64,7 +64,7 @@ class SendAnswers(Resource):
 
 
 class GetSurveys(Resource):
-    # @jwt_required()
+    @jwt_required()
     def get(self, survey_id=None):
         try:
             if survey_id is None:
@@ -93,19 +93,23 @@ class CompleteSurvey(Resource):
             if survey_id:
                 survey_slv = {}
                 survey = Surveys.query.filter_by(id=survey_id).first()
-                page = Pages.query.filter_by(surveys_id=survey_id).all()
-                for p in page:
-                    element = Questions.query.filter_by(page_id=p.id).all()
-                    for e in element:
-                        p.elements.append(e.serialize())
-                    pg_name = {"name": p.name, "elements": p.elements}
-                    survey.Pages.append(pg_name)
-                survey_slv[survey_id] = {"title": survey.title, "description": survey.description,
-                                         "logoPosition": survey.logoPosition,
-                                         "date_creation": survey.date_creation.strftime("%Y-%m-%d %H:%M:%S"),
-                                         "value": survey.value, "pages": survey.Pages}
-                return survey_slv, 200
+                if survey:
+                    page = Pages.query.filter_by(surveys_id=survey_id).all()
+                    for p in page:
+                        element = Questions.query.filter_by(page_id=p.id).all()
+                        for e in element:
+                            p.elements.append(e.serialize())
+                        pg_name = {"name": p.name, "elements": p.elements}
+                        survey.pages.append(pg_name)
+                    survey_slv[survey_id] = {"title": survey.title, "description": survey.description,
+                                             "logoPosition": survey.logoPosition,
+                                             "date_creation": survey.date_creation.strftime("%Y-%m-%d %H:%M:%S"),
+                                             "value": survey.value, "pages": survey.pages}
+                    return survey_slv, 200
+                else:
+                    return {"msg": "id not already exist"}, 400
             else:
                 return {"msg": "necessary id"}, 400
+
         except Exception as e:
             return {"msg": f"get survey for complete error {e}"}, 500

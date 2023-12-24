@@ -3,7 +3,7 @@ from app.config.db import db
 from app.models.user import TokenBlocklist, Users
 from app.resources.surveys import CreateSurvey, SendAnswers, CompleteSurvey, GetSurveys
 from app.resources.user import Register, GetUsers, Login, Profile, Logout
-from flask import Flask, render_template
+from flask import Flask
 from datetime import timedelta
 from flask_restful import Api
 from flask_jwt_extended import JWTManager

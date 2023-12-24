@@ -1,10 +1,8 @@
 from app.config.db import db
 from app.models.user import Users, Profiles, TokenBlocklist
 from app.parsers.parsers import registerParser, loginParser, profileParser
-from flask import jsonify
 from flask_jwt_extended import jwt_required, create_access_token, create_refresh_token, get_current_user, get_jwt
 from flask_restful import Resource
-from flask_restful.representations import json
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -27,7 +25,7 @@ class Register(Resource):
 
 
 class GetUsers(Resource):
-    # @jwt_required()
+    @jwt_required()
     def get(self, user_id=None):
         try:
             if user_id is None:
