@@ -61,6 +61,9 @@ class Login(Resource):
             return {"msg": "user is not found"}, 404
         except Exception as e:
             return {"msg": "login error"}, 500
+    @jwt_required()
+    def get(self):
+        return {"msg": "you are logged in"}
 
 
 class Profile(Resource):
