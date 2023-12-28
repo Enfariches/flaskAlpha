@@ -78,7 +78,8 @@ class Profile(Resource):
             if profile_in_base or username_in_base:
                 return {"msg": "this user or username already exists"}, 201
             else:
-                new_profile = Profiles(username=profile["username"], avatar_url=profile.get("avatar_url"),
+                new_profile = Profiles(username=profile["username"], description=profile.get("description"),
+                                       avatar_url=profile.get("avatar_url"),
                                        user_id=user.id)
                 db.session.add(new_profile)
                 db.session.commit()
@@ -111,7 +112,8 @@ class Profile(Resource):
             user = Users.query.filter_by(login=get_current_user()).first()
             profile = Profiles.query.filter_by(user_id=user.id).first()
             if profile:
-                profile_slv = {"username": profile.username, "avatar_url": profile.avatar_url,
+                profile_slv = {"username": profile.username, "description": profile.description,
+                               "avatar_url": profile.avatar_url,
                                "balance": profile.balance,
                                "completed_surveys": profile.complete_survey}
                 return profile_slv, 200

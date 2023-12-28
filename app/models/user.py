@@ -27,13 +27,15 @@ class Users(db.Model):
 
 
 class Profiles(db.Model):
-    def __init__(self, username, avatar_url, user_id):
+    def __init__(self, username, description, avatar_url, user_id):
         self.username = username
+        self.description = description
         self.avatar_url = avatar_url
         self.user_id = user_id
 
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(), nullable=False)
+    description = db.Column(db.String(), nullable=True)
     avatar_url = db.Column(db.String(), nullable=True)
     balance = db.Column(db.Integer, default=0)
     complete_survey = db.Column(db.Integer, nullable=True, default=0)
