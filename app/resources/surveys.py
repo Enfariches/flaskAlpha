@@ -119,21 +119,18 @@ class CheckAnswers(Resource):
     def get(self, survey_id=None):
         try:
             user = Users.query.filter_by(login=get_current_user()).first()
-            if user.role == "b":
-                survey = Surveys.query.filter_by(user_id=user.id, id=survey_id).first()
-                if survey:
-                    pages = Pages.query.filter_by(survey_id=survey.id).all()
-                    answers_slv = {}
-                    for p in pages:
-                        questions = Questions.query.filter_by(page_id=p.id).all()
-                        for q in questions:
-                            answers = Answers.query.filter_by(question_id=q.id).all()
-                            for ans in answers:
-                                answers_slv[ans.title] = ans.answer
-                    return answers_slv, 200
-                else:
-                    return {"msg": "you dont have permission or survey has been exists"}, 400
+            survey = Surveys.query.filter_by(user_id=user.id, id=survey_id).first()
+            if user.role == "b" and survey:
+                pages = Pages.query.filter_by(survey_id=survey.id).all()
+                answers_slv = {}
+                for p in pages:
+                    questions = Questions.query.filter_by(page_id=p.id).all()
+                    for q in questions:
+                        answers = Answers.query.filter_by(question_id=q.id).all()
+                        for ans in answers:
+                            answers_slv[ans.title] = ans.answer
+                return answers_slv, 200
             else:
-                return {"msg": "you dont have permission"}, 400
+                return {"msg": "you dont have permission or survey has been exists"}, 400
         except Exception as e:
             return {"msg": f"get answers error {e}"}, 500
