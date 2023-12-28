@@ -1,7 +1,7 @@
 from app.config.config import postgresqlConfig
 from app.config.db import db
 from app.models.user import TokenBlocklist, Users
-from app.resources.surveys import CreateSurvey, SendAnswers, CompleteSurvey, GetSurveys
+from app.resources.surveys import CreateSurvey, SendAnswers, CompleteSurvey, GetSurveys, CheckAnswers
 from app.resources.user import Register, GetUsers, Login, Profile, Logout
 from flask import Flask
 from datetime import timedelta
@@ -44,3 +44,4 @@ api.add_resource(CreateSurvey, "/api/createsurvey/")
 api.add_resource(SendAnswers, "/api/completesurvey/<int:survey_id>/sendanswers/")
 api.add_resource(CompleteSurvey, "/api/completesurvey/<int:survey_id>/")
 api.add_resource(GetSurveys, "/api/surveys/", "/api/surveys/<int:survey_id>/")
+api.add_resource(CheckAnswers, "/api/checkanswers/<int:survey_id>/")

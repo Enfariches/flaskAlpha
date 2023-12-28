@@ -24,15 +24,15 @@ class Surveys(db.Model):
 
 
 class Pages(db.Model):
-    def __init__(self, name, elements, surveys_id):
+    def __init__(self, name, elements, survey_id):
         self.name = name
         self.elements = elements
-        self.surveys_id = surveys_id
+        self.survey_id = survey_id
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False)
     elements = db.Column(ARRAY(JSONB), nullable=False)
-    surveys_id = db.Column(db.Integer, db.ForeignKey("surveys.id"))
+    survey_id = db.Column(db.Integer, db.ForeignKey("surveys.id"))
     question = db.relationship("Questions", backref="pages")
 
 

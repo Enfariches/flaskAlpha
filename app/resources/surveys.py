@@ -20,7 +20,7 @@ class CreateSurvey(Resource):
                 db.session.flush()
                 for i in range(len(survey["pages"])):
                     new_page = Pages(name=survey["pages"][i]["page_name"], elements=[],
-                                     surveys_id=new_survey.id)
+                                     survey_id=new_survey.id)
                     db.session.add(new_page)
                     db.session.flush()
                     for j in range(len(survey["pages"][i]["elements"])):
@@ -47,7 +47,7 @@ class SendAnswers(Resource):
             user = Users.query.filter_by(login=get_current_user()).first()
             answer = answerSendParser.parse_args()
             survey = Surveys.query.filter_by(id=survey_id).first()
-            page_lst = Pages.query.filter_by(surveys_id=survey_id).all()
+            page_lst = Pages.query.filter_by(survey_id=survey_id).all()
             for page in page_lst:
                 question_lst = Questions.query.filter_by(page_id=page.id).all()
                 for i in range(len(question_lst)):
@@ -60,7 +60,7 @@ class SendAnswers(Resource):
             db.session.commit()
             return {"msg": "answers has been add"}, 200
         except Exception as e:
-            return {"msg": "answers add error"}, 500
+            return {"msg": f"answers add error {e}"}, 500
 
 
 class GetSurveys(Resource):
@@ -94,7 +94,7 @@ class CompleteSurvey(Resource):
                 survey_slv = {}
                 survey = Surveys.query.filter_by(id=survey_id).first()
                 if survey:
-                    page = Pages.query.filter_by(surveys_id=survey_id).all()
+                    page = Pages.query.filter_by(survey_id=survey_id).all()
                     for p in page:
                         element = Questions.query.filter_by(page_id=p.id).all()
                         for e in element:
@@ -113,3 +113,27 @@ class CompleteSurvey(Resource):
 
         except Exception as e:
             return {"msg": f"get survey for complete error {e}"}, 500
+
+class CheckAnswers(Resource):
+    @jwt_required()
+    def get(self, survey_id=None):
+        try:
+            user = Users.query.filter_by(login=get_current_user()).first()
+            if user.role == "b":
+                survey = Surveys.query.filter_by(user_id=user.id, id=survey_id).first()
+                if survey:
+                    pages = Pages.query.filter_by(survey_id=survey.id).all()
+                    answers_slv = {}
+                    for p in pages:
+                        questions = Questions.query.filter_by(page_id=p.id).all()
+                        for q in questions:
+                            answers = Answers.query.filter_by(question_id=q.id).all()
+                            for ans in answers:
+                                answers_slv[ans.title] = ans.answer
+                    return answers_slv, 200
+                else:
+                    return {"msg": "you dont have permission or survey has been exists"}, 400
+            else:
+                return {"msg": "you dont have permission"}, 400
+        except Exception as e:
+            return {"msg": f"get answers error {e}"}, 500

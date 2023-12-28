@@ -51,10 +51,11 @@ class Login(Resource):
             user_in_base = Users.query.filter_by(login=user["login"]).first()
             if user_in_base:
                 if check_password_hash(user_in_base.hash_password, user["password"]):
-                    access_token = create_access_token(identity=user['login'])
-                    refresh_token = create_refresh_token(identity=user['login'])
+                    token = create_access_token(identity=user['login'])
                     return {"msg": "successful authorization",
-                            'access_token': access_token
+                            "user": user_in_base.login,
+                            "role": user_in_base.role,
+                            'token': token
                             }, 200
                 else:
                     return {"msg": "password is not correct"}, 400
@@ -91,15 +92,18 @@ class Profile(Resource):
             profile_args = profileParser.parse_args()
             user = Users.query.filter_by(login=get_current_user()).first()
             profile = Profiles.query.filter_by(user_id=user.id).first()
-            username_in_base = Profiles.query.filter_by(username=profile_args.username).first()
-            if not username_in_base:
-                profile.username = profile_args["username"]
-                db.session.commit()
-                return {"msg": "success change username"}, 200
-            else:
-                return {"msg": "this username already exists"}, 400
+            if profile:
+                if profile_args["username"] is None:
+                    profile.avatar_url = profile_args["avatar_url"]
+                elif profile_args["avatar_url"] is None:
+                    profile.username = profile_args["username"]
+                else:
+                    profile.username = profile_args["username"]
+                    profile.avatar_url = profile_args["avatar_url"]
+            db.session.commit()
+            return {"msg": "success change"}, 200
         except Exception as e:
-            return {"msg": "refresh profile info error"}, 500
+            return {"msg": f"refresh profile info error {e}"}, 500
 
     @jwt_required()
     def get(self):
