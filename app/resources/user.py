@@ -102,7 +102,7 @@ class Profile(Resource):
                     profile.username = profile_args["username"]
                     profile.avatar_url = profile_args["avatar_url"]
             db.session.commit()
-            return {"msg": "success change"}, 200
+            return {"msg": "success change"}, 2001
         except Exception as e:
             return {"msg": f"refresh profile info error {e}"}, 500
 
