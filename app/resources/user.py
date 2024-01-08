@@ -85,7 +85,7 @@ class Profile(Resource):
                 db.session.commit()
                 return {"msg": "success"}, 200
         except Exception as e:
-            return {"msg": "create profile error"}, 500
+            return {"msg": f"create profile error {e}"}, 500
 
     @jwt_required()
     def put(self):
@@ -120,7 +120,7 @@ class Profile(Resource):
             else:
                 return {"msg": "not profile"}, 201
         except Exception as e:
-            return {"msg": "get profile error"}, 500
+            return {"msg": f"get profile error {e}"}, 500
 
 
 class Logout(Resource):
@@ -130,6 +130,6 @@ class Logout(Resource):
             jti = get_jwt()["jti"]
             db.session.add(TokenBlocklist(jti=jti))
             db.session.commit()
-            return {"msg": "logout success"}, 200
+            return {"msg": "logout success"}, 201
         except Exception as e:
             return {"msg": "logout error"}, 500

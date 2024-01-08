@@ -1,3 +1,5 @@
+from flask import request
+
 from app.config.db import db
 from app.models.surveys import Surveys, Pages, Questions, Answers
 from app.models.user import Users, Profiles
@@ -45,17 +47,16 @@ class SendAnswers(Resource):
     def post(self, survey_id):
         try:
             user = Users.query.filter_by(login=get_current_user()).first()
-            answer = answerSendParser.parse_args()
-            survey = Surveys.query.filter_by(id=survey_id).first()
             page_lst = Pages.query.filter_by(survey_id=survey_id).all()
+            answersRequest = list(request.json.items())
             for page in page_lst:
                 question_lst = Questions.query.filter_by(page_id=page.id).all()
                 for i in range(len(question_lst)):
-                    new_answer = Answers(title=question_lst[i].name, answer=answer["answers"][i],
+                    new_answer = Answers(title=question_lst[i].name, answer=answersRequest[i][1],
                                          question_id=question_lst[i].id, user_id=user.id)
                     db.session.add(new_answer)
             profile = Profiles.query.filter_by(user_id=user.id).first()
-            profile.balance += survey.value
+            profile.balance += Surveys.query.filter_by(id=survey_id).first().value
             profile.complete_survey += 1
             db.session.commit()
             return {"msg": "answers has been add"}, 200
@@ -74,11 +75,14 @@ class GetSurveys(Resource):
             if surveys_lst:
                 surveys_dict = {}
                 for survey in surveys_lst:
+                    creator = Profiles.query.filter_by(user_id=survey.user_id).first()
+                    if creator:
+                        creator = creator.username
                     surveys_dict[survey.id] = {"title": survey.title, "description": survey.description,
                                                "logoPosition": survey.logoPosition,
                                                "date_creation": survey.date_creation.strftime("%Y-%m-%d %H:%M:%S"),
                                                "value": survey.value,
-                                               "pages": [], "user_id": survey.user_id}
+                                               "pages": [], "user_id": survey.user_id, "creator": creator}
                 return surveys_dict, 200
             else:
                 return {"msg": "survey is not found"}
@@ -110,26 +114,26 @@ class CompleteSurvey(Resource):
                     return {"msg": "id not already exist"}, 400
             else:
                 return {"msg": "necessary id"}, 400
-
         except Exception as e:
             return {"msg": f"get survey for complete error {e}"}, 500
 
-class CheckAnswers(Resource):
+class GetAnswers(Resource):
     @jwt_required()
     def get(self, survey_id=None):
         try:
             user = Users.query.filter_by(login=get_current_user()).first()
             survey = Surveys.query.filter_by(user_id=user.id, id=survey_id).first()
             if user.role == "b" and survey:
-                pages = Pages.query.filter_by(survey_id=survey.id).all()
-                answers_slv = {}
-                for p in pages:
-                    questions = Questions.query.filter_by(page_id=p.id).all()
-                    for q in questions:
-                        answers = Answers.query.filter_by(question_id=q.id).all()
-                        for ans in answers:
-                            answers_slv[ans.title] = ans.answer
-                return answers_slv, 200
+                all_users = set((usr.user_id for usr in Answers.query.all()))
+                all_answers = []
+                for usr_id in all_users:
+                    answers_slv = {}
+                    for ans in Answers.query.filter_by(user_id=usr_id):
+                        answers_slv[ans.title] = ans.answer
+                    info_dict = {"username": Profiles.query.filter_by(user_id=usr_id).first().username,
+                                 "answers": answers_slv}
+                    all_answers.append(info_dict)
+                return {"surveyTitle": survey.title, "users_answers": all_answers}, 200
             else:
                 return {"msg": "you dont have permission or survey has been exists"}, 400
         except Exception as e:
