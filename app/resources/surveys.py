@@ -138,3 +138,19 @@ class GetAnswers(Resource):
                 return {"msg": "you dont have permission or survey has been exists"}, 400
         except Exception as e:
             return {"msg": f"get answers error {e}"}, 500
+
+class MySurveys(Resource):
+    @jwt_required()
+    def get(self):
+        try:
+            user = Users.query.filter_by(login=get_current_user()).first()
+            if user.role == "b":
+                survey_lst = Surveys.query.filter_by(user_id=user.id).all()
+                all_lst = []
+                for s in survey_lst:
+                    all_lst.append(s.id)
+                return {"mySurveys": all_lst}, 200
+            else:
+                return {"msg": "you dont have permission"}, 400
+        except Exception as e:
+            return {"msg": f"get mySurveys error {e}"}, 500
